@@ -3,19 +3,25 @@
 {% block content %}
   <h2>new post</h2>
 
-    <form method="post">
-      <label>
-        <div>subject</div>
-        <input type="text" name="subject" value="{{subject}}">
-      </label>
+    {% if error_message %}
+      <div>{{error_message}}</div>
+      <a href="/blog/">Back to blog</a>
+    {% else %}
 
-      <label>
-        <div>blog</div>
-        <textarea name="content">{{content}}</textarea>
-      </label>
+      <form method="post">
+        <label>
+          <div>subject</div>
+          <input type="text" name="subject" value="{{subject}}">
+        </label>
 
-      <div class="error">{{error}}</div>
+        <label>
+          <div>blog</div>
+          <textarea name="content">{{content}}</textarea>
+        </label>
 
-      <input type="submit">
-    </form>
+        <div class="error">{{error}}</div>
+
+        <input type="submit">
+      </form>
+    {% endif %}
 {% endblock %}

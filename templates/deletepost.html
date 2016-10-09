@@ -1,10 +1,18 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <p>Are you sure you want to delete the post: {{subject}}?</p>
 
-  <form action="#" method='post'>
-    <button type="submit" id="submit" type="submit"> Delete </button>
-    <a href="/blog" class="btn btn-default delete"> Cancel </a>
-  </form>
+   <h1>Delete Post</h1>
+   {% if error_message %}
+      <div>{{error_message}}</div>
+      <a href="/blog/">Back to blog</a>
+   {% else %}
+
+      <p>Are you sure you want to delete the post: {{p.subject}}?</p>
+
+      <form action="#" method='post'>
+        <button type="submit"> Delete </button>
+        <a href="/blog" class="btn btn-default delete"> Cancel </a>
+      </form>
+   {% endif %}
 {% endblock %}

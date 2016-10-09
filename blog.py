@@ -49,6 +49,7 @@ class BlogHandler(webapp2.RequestHandler):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
         self.user = uid and User.by_id(int(uid))
+        #print self.user.key().id()
 
 
 class MainPage(BlogHandler):
@@ -64,6 +65,9 @@ class BlogFront(BlogHandler):
 
 class PostPage(BlogHandler):
     def get(self, post_id):
+        if not self.user:
+            print 'Please login'
+            self.redirect('/blog')
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -75,11 +79,20 @@ class PostPage(BlogHandler):
 
 class EditPost(BlogHandler):
     def get(self, post_id):
+        if not self.user:
+            print 'Please login'
+            self.redirect('/blog')
+
+
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
         if not post:
             self.error(404)
+            return
+
+        if post.user != self.user.key().id():
+            self.render("newpost.html", error_message='not allowed to edit post')
             return
 
         self.render("newpost.html", subject=post.subject, content=post.content)
@@ -107,6 +120,9 @@ class EditPost(BlogHandler):
 
 class DeletePost(BlogHandler):
     def get(self, post_id):
+        if not self.user:
+            print 'Please login'
+            self.redirect('/blog')
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -114,7 +130,11 @@ class DeletePost(BlogHandler):
             self.error(404)
             return
 
-        self.render("deletepost.html", subject=post.subject)
+        if post.user != self.user.key().id():
+            self.render("deletepost.html", error_message='not allowed to delete post')
+            return
+
+        self.render("deletepost.html", p=post)
 
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
@@ -131,6 +151,9 @@ class DeletePost(BlogHandler):
 class LikePost(BlogHandler):
 
     def post(self, post_id):
+        if not self.user:
+            print 'Please login'
+            self.redirect('/blog')
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -146,6 +169,9 @@ class LikePost(BlogHandler):
 
 class NewPost(BlogHandler):
     def get(self):
+        if not self.user:
+            print 'Please login'
+            self.redirect('/blog')
         self.render("newpost.html")
 
     def post(self):
@@ -153,7 +179,7 @@ class NewPost(BlogHandler):
         content = self.request.get('content')
 
         if subject and content:
-            p = Post(parent=blog_key(), subject=subject, content=content)
+            p = Post(parent=blog_key(), subject=subject, content=content, user=self.user.key().id())
             p.put()
             self.redirect('/blog/%s' % str(p.key().id()))
         else:
@@ -163,6 +189,9 @@ class NewPost(BlogHandler):
 
 class NewComment(BlogHandler):
     def get(self, post_id):
+        if not self.user:
+            print 'Please login'
+            self.redirect('/blog')
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -191,7 +220,11 @@ class NewComment(BlogHandler):
 
 
 class EditComment(BlogHandler):
+
     def get(self, post_id, comment_id):
+        if not self.user:
+            print 'Please login'
+            self.redirect('/blog')
         keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(keyBlog)
 
@@ -233,6 +266,9 @@ class EditComment(BlogHandler):
 
 class DeleteComment(BlogHandler):
     def get(self, post_id, comment_id):
+        if not self.user:
+            print 'Please login'
+            self.redirect('/blog')
         keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(keyBlog)
 
