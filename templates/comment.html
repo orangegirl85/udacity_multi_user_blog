@@ -1,0 +1,13 @@
+<div class="comment">
+
+  <div class="comment-content">
+    {{c._render_text | safe}}
+      <div class="comment-date">
+        {{c.created.strftime("%b %d, %Y")}}
+      </div>
+  </div>
+  <a href="/comment/edit/{{c.key().parent().id()}}/{{c.key().id()}}">Edit</a>
+  | <a href="/comment/delete/{{c.key().parent().id()}}/{{c.key().id()}}">Delete</a>
+
+
+</div>

@@ -7,12 +7,15 @@ from string import letters
 import webapp2
 
 from google.appengine.ext import db
-from models import Post, User
+from models import Post, User, Comment
 import helper
 
 
 def blog_key(name='default'):
     return db.Key.from_path('blogs', name)
+
+def comment_key(name='default'):
+    return db.Key.from_path('comment', name)
 
 
 class BlogHandler(webapp2.RequestHandler):
@@ -70,6 +73,76 @@ class PostPage(BlogHandler):
 
         self.render("permalink.html", post=post)
 
+class EditPost(BlogHandler):
+    def get(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+
+        self.render("newpost.html", subject=post.subject, content=post.content)
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+
+        if subject and content:
+            post.subject = subject
+            post.content = content
+            post.put()
+            self.redirect('/blog/%s' % str(post.key().id()))
+        else:
+            error = "subject and content, please!"
+            self.render("newpost.html", subject=subject, content=content, error=error)
+
+
+class DeletePost(BlogHandler):
+    def get(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+
+        self.render("deletepost.html", subject=post.subject)
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+
+        post.delete()
+        self.redirect('/blog')
+
+
+class LikePost(BlogHandler):
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+
+        post.likes +=1
+        post.put()
+        self.redirect('/blog')
+
+
 
 class NewPost(BlogHandler):
     def get(self):
@@ -87,6 +160,108 @@ class NewPost(BlogHandler):
             error = "subject and content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
 
+
+class NewComment(BlogHandler):
+    def get(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+
+        self.render("newcomment.html", p=post )
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+        content = self.request.get('content')
+
+        if content:
+            c = Comment(parent=key, content=content)
+            c.put()
+            self.redirect('/blog' )
+        else:
+            error = "content, please!"
+            self.render("newcomment.html", content=content, error=error)
+
+
+class EditComment(BlogHandler):
+    def get(self, post_id, comment_id):
+        keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(keyBlog)
+
+        if not post:
+            self.error(404)
+            return
+        keyComment = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
+        comment = db.get(keyComment)
+        if not comment:
+            self.error(404)
+            return
+
+        self.render("newcomment.html", p=post, content=comment.content)
+
+    def post(self, post_id, comment_id):
+        keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(keyBlog)
+
+        if not post:
+            self.error(404)
+            return
+
+        keyComment = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
+        comment = db.get(keyComment)
+        if not comment:
+            self.error(404)
+            return
+
+        content = self.request.get('content')
+
+        if content:
+            comment.content = content
+            comment.put()
+            self.redirect('/blog')
+        else:
+            error = " content, please!"
+            self.render("newcomment.html", p=post, content=content, error=error)
+
+
+class DeleteComment(BlogHandler):
+    def get(self, post_id, comment_id):
+        keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(keyBlog)
+
+        if not post:
+            self.error(404)
+            return
+        keyComment = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
+        comment = db.get(keyComment)
+        if not comment:
+            self.error(404)
+            return
+
+        self.render("deletecomment.html", subject=post.subject, c=comment)
+
+    def post(self, post_id, comment_id):
+        keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(keyBlog)
+
+        if not post:
+            self.error(404)
+            return
+        keyComment = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
+        comment = db.get(keyComment)
+        if not comment:
+            self.error(404)
+            return
+
+        comment.delete()
+        self.redirect('/blog')
 
 ###### Unit 2 HW's
 class Rot13(BlogHandler):
@@ -228,6 +403,12 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/?', BlogFront),
                                ('/blog/([0-9]+)', PostPage),
                                ('/blog/newpost', NewPost),
+                               ('/blog/edit/([0-9]+)', EditPost),
+                               ('/blog/delete/([0-9]+)', DeletePost),
+                               ('/blog/like/([0-9]+)', LikePost),
+                               ('/comment/newcomment/([0-9]+)', NewComment),
+                               ('/comment/edit/([0-9]+)/([0-9]+)', EditComment),
+                               ('/comment/delete/([0-9]+)/([0-9]+)', DeleteComment),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),

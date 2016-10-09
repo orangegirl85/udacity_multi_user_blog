@@ -9,16 +9,32 @@ import hashlib
 from string import letters
 
 
+def blog_key(name='default'):
+    return db.Key.from_path('blogs', name)
+
 class Post(db.Model):
     """Post object"""
     subject = db.StringProperty(required=True)
     content = db.TextProperty(required=True)
+    likes = db.IntegerProperty(default=0)
+    #user = db.KeyProperty(required=True, kind='User')
     created = db.DateTimeProperty(auto_now_add=True)
     last_modified = db.DateTimeProperty(auto_now=True)
 
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
         return helper.render_str("post.html", p=self)
+
+    @property
+    def comments(self):
+        key = db.Key.from_path('Post', int(self.key().id()), parent=blog_key())
+
+        comments = db.GqlQuery("SELECT * "
+                            "FROM Comment "
+                            "WHERE ANCESTOR IS :1 "
+                            "ORDER BY created DESC",
+                            key)
+        return comments
 
 def make_salt(length = 5):
     return ''.join(random.choice(letters) for x in xrange(length))
@@ -63,3 +79,16 @@ class User(db.Model):
         u = cls.by_name(name)
         if u and valid_pw(name, pw, u.pw_hash):
             return u
+
+
+class Comment(db.Model):
+    content = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    last_modified = db.DateTimeProperty(auto_now=True)
+    #user = db.KeyProperty(required=True, kind='User')
+    #post = db.KeyProperty(required=True, kind='Post')
+
+    def render(self):
+        self._render_text = self.content.replace('\n', '<br>')
+        return helper.render_str("comment.html", c=self)
+

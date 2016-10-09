@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <p>Are you sure you want to delete the comment {{c.content}} for post: {{subject}}?</p>
+
+  <form action="#" method='post'>
+    <button type="submit" id="submit" type="submit"> Delete </button>
+    <a href="/blog" class="btn btn-default delete"> Cancel </a>
+  </form>
+{% endblock %}
