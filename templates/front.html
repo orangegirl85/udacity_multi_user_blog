@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
+  {% if error_message %}
+    <div>{{error_message}}</div>
+  {% endif %}
   <a href="/blog/newpost">New post</a>
   {% for p in posts %}
     {{ p.render() | safe }}

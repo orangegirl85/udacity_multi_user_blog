@@ -49,7 +49,6 @@ class BlogHandler(webapp2.RequestHandler):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
         self.user = uid and User.by_id(int(uid))
-        #print self.user.key().id()
 
 
 class MainPage(BlogHandler):
@@ -63,11 +62,20 @@ class BlogFront(BlogHandler):
         self.render('front.html', posts=posts)
 
 
-class PostPage(BlogHandler):
-    def get(self, post_id):
+def check_user_is_logged_in(func):
+    def inner(*args, **kwargs):
+        self = args[0]
         if not self.user:
-            print 'Please login'
-            self.redirect('/blog')
+            posts = db.GqlQuery("select * from Post order by created desc limit 10")
+            self.render('front.html', posts=posts, error_message='Please login')
+            return
+        return func(*args, **kwargs)
+    return inner
+
+
+class PostPage(BlogHandler):
+    @check_user_is_logged_in
+    def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -78,12 +86,8 @@ class PostPage(BlogHandler):
         self.render("permalink.html", post=post)
 
 class EditPost(BlogHandler):
+    @check_user_is_logged_in
     def get(self, post_id):
-        if not self.user:
-            print 'Please login'
-            self.redirect('/blog')
-
-
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -119,10 +123,8 @@ class EditPost(BlogHandler):
 
 
 class DeletePost(BlogHandler):
+    @check_user_is_logged_in
     def get(self, post_id):
-        if not self.user:
-            print 'Please login'
-            self.redirect('/blog')
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -149,11 +151,8 @@ class DeletePost(BlogHandler):
 
 
 class LikePost(BlogHandler):
-
+    @check_user_is_logged_in
     def post(self, post_id):
-        if not self.user:
-            print 'Please login'
-            self.redirect('/blog')
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -168,10 +167,8 @@ class LikePost(BlogHandler):
 
 
 class NewPost(BlogHandler):
+    @check_user_is_logged_in
     def get(self):
-        if not self.user:
-            print 'Please login'
-            self.redirect('/blog')
         self.render("newpost.html")
 
     def post(self):
@@ -188,10 +185,8 @@ class NewPost(BlogHandler):
 
 
 class NewComment(BlogHandler):
+    @check_user_is_logged_in
     def get(self, post_id):
-        if not self.user:
-            print 'Please login'
-            self.redirect('/blog')
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
@@ -220,11 +215,8 @@ class NewComment(BlogHandler):
 
 
 class EditComment(BlogHandler):
-
+    @check_user_is_logged_in
     def get(self, post_id, comment_id):
-        if not self.user:
-            print 'Please login'
-            self.redirect('/blog')
         keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(keyBlog)
 
@@ -265,10 +257,8 @@ class EditComment(BlogHandler):
 
 
 class DeleteComment(BlogHandler):
+    @check_user_is_logged_in
     def get(self, post_id, comment_id):
-        if not self.user:
-            print 'Please login'
-            self.redirect('/blog')
         keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(keyBlog)
 
