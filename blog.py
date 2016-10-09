@@ -73,41 +73,64 @@ def check_user_is_logged_in(func):
     return inner
 
 
-class PostPage(BlogHandler):
-    @check_user_is_logged_in
-    def get(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
+def check_post(func):
+    def inner(*args, **kwargs):
+        self = args[0]
+        post_id = args[1]
+        post = get_post(post_id)
 
         if not post:
             self.error(404)
             return
+        return func(*args, **kwargs)
+    return inner
 
-        self.render("permalink.html", post=post)
 
-class EditPost(BlogHandler):
-    @check_user_is_logged_in
-    def get(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-            return
+def check_user_has_permission(func):
+    def inner(*args, **kwargs):
+        self = args[0]
+        post_id = args[1]
+        post = get_post(post_id)
 
         if post.user != self.user.key().id():
             self.render("newpost.html", error_message='not allowed to edit post')
             return
 
+        return func(*args, **kwargs)
+    return inner
+
+
+
+
+def get_post(post_id):
+    key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+    return db.get(key)
+
+class PostPage(BlogHandler):
+    @check_post
+    @check_user_is_logged_in
+    def get(self, post_id):
+        post = get_post(post_id)
+
+        self.render("permalink.html", post=post)
+
+class EditPost(BlogHandler):
+
+
+    @check_user_is_logged_in
+    @check_post
+    @check_user_has_permission
+    def get(self, post_id):
+        post = get_post(post_id)
+
+        # if post.user != self.user.key().id():
+        #     self.render("newpost.html", error_message='not allowed to edit post')
+        #     return
+
         self.render("newpost.html", subject=post.subject, content=post.content)
 
     def post(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-            return
+        post = get_post(post_id)
 
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -124,13 +147,9 @@ class EditPost(BlogHandler):
 
 class DeletePost(BlogHandler):
     @check_user_is_logged_in
+    @check_post
     def get(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-            return
+        post = get_post(post_id)
 
         if post.user != self.user.key().id():
             self.render("deletepost.html", error_message='not allowed to delete post')
@@ -139,12 +158,7 @@ class DeletePost(BlogHandler):
         self.render("deletepost.html", p=post)
 
     def post(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-            return
+        post = get_post(post_id)
 
         post.delete()
         self.redirect('/blog')
@@ -152,13 +166,9 @@ class DeletePost(BlogHandler):
 
 class LikePost(BlogHandler):
     @check_user_is_logged_in
+    @check_post
     def post(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-            return
+        post = get_post(post_id)
 
         post.likes +=1
         post.put()
