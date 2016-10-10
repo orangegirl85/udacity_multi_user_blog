@@ -86,25 +86,81 @@ def check_post(func):
     return inner
 
 
-def check_user_has_permission(func):
+def check_comment(func):
     def inner(*args, **kwargs):
         self = args[0]
         post_id = args[1]
-        post = get_post(post_id)
+        comment_id = args[2]
+        post_key = get_post_key(post_id)
+        comment = get_comment(comment_id, post_key)
 
-        if post.user != self.user.key().id():
-            self.render("newpost.html", error_message='not allowed to edit post')
+        if not comment:
+            self.error(404)
             return
-
         return func(*args, **kwargs)
     return inner
 
 
+def check_user_has_permission(template, error, actual_user):
+    def validate_user_permission(f):
 
+        def inner(*args, **kwds):
+            self = args[0]
+            post_id = args[1]
+            post = get_post(post_id)
+
+            if not actual_user and post.user != self.user.key().id():
+                self.render(template, error_message=error)
+                return
+
+            if actual_user and post.user == self.user.key().id():
+                posts = db.GqlQuery("select * from Post order by created desc limit 10")
+                self.render(template, posts=posts, error_message=error)
+                return
+            return f(*args, **kwds)
+
+        return inner
+
+    return validate_user_permission
+
+
+def check_comment_user_has_permission(template, error, actual_user):
+    def validate_user_permission(f):
+
+        def inner(*args, **kwds):
+            self = args[0]
+            post_id = args[1]
+            comment_id = args[2]
+            post = get_post(post_id)
+            post_key = get_post_key(post_id)
+            comment = get_comment(comment_id, post_key)
+
+            if not actual_user and comment.user != self.user.key().id():
+                self.render(template, p=post, error_message=error)
+                return
+
+            if actual_user and comment.user == self.user.key().id():
+                posts = db.GqlQuery("select * from Post order by created desc limit 10")
+                self.render(template, posts=posts, error_message=error)
+                return
+            return f(*args, **kwds)
+
+        return inner
+
+    return validate_user_permission
+
+def get_post_key(post_id):
+    return db.Key.from_path('Post', int(post_id), parent=blog_key())
 
 def get_post(post_id):
-    key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+    key = get_post_key(post_id)
     return db.get(key)
+
+
+def get_comment(comment_id, keyBlog):
+    key = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
+    return db.get(key)
+
 
 class PostPage(BlogHandler):
     @check_post
@@ -119,14 +175,9 @@ class EditPost(BlogHandler):
 
     @check_user_is_logged_in
     @check_post
-    @check_user_has_permission
+    @check_user_has_permission("newpost.html", 'not allowed to edit post', False)
     def get(self, post_id):
         post = get_post(post_id)
-
-        # if post.user != self.user.key().id():
-        #     self.render("newpost.html", error_message='not allowed to edit post')
-        #     return
-
         self.render("newpost.html", subject=post.subject, content=post.content)
 
     def post(self, post_id):
@@ -148,12 +199,9 @@ class EditPost(BlogHandler):
 class DeletePost(BlogHandler):
     @check_user_is_logged_in
     @check_post
+    @check_user_has_permission("deletepost.html", 'not allowed to delete post', False)
     def get(self, post_id):
         post = get_post(post_id)
-
-        if post.user != self.user.key().id():
-            self.render("deletepost.html", error_message='not allowed to delete post')
-            return
 
         self.render("deletepost.html", p=post)
 
@@ -161,17 +209,6 @@ class DeletePost(BlogHandler):
         post = get_post(post_id)
 
         post.delete()
-        self.redirect('/blog')
-
-
-class LikePost(BlogHandler):
-    @check_user_is_logged_in
-    @check_post
-    def post(self, post_id):
-        post = get_post(post_id)
-
-        post.likes +=1
-        post.put()
         self.redirect('/blog')
 
 
@@ -194,66 +231,57 @@ class NewPost(BlogHandler):
             self.render("newpost.html", subject=subject, content=content, error=error)
 
 
+class LikePost(BlogHandler):
+    @check_user_is_logged_in
+    @check_post
+    @check_user_has_permission("front.html", 'not allowed to like own post', True)
+    def post(self, post_id):
+        post = get_post(post_id)
+
+        post.likes +=1
+        post.put()
+        self.redirect('/blog')
+
+
 class NewComment(BlogHandler):
     @check_user_is_logged_in
+    @check_post
     def get(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-            return
+        post = get_post(post_id)
 
         self.render("newcomment.html", p=post )
 
+    @check_post
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-            return
+        post = get_post(post_id)
         content = self.request.get('content')
 
         if content:
-            c = Comment(parent=key, content=content)
+            c = Comment(parent=key, content=content, user=self.user.key().id())
             c.put()
-            self.redirect('/blog' )
+            self.redirect('/blog')
         else:
             error = "content, please!"
-            self.render("newcomment.html", content=content, error=error)
+            self.render("newcomment.html", p=post, content=content, error=error)
 
 
 class EditComment(BlogHandler):
     @check_user_is_logged_in
+    @check_post
+    @check_comment
+    @check_comment_user_has_permission("newcomment.html", 'not allowed to edit comment', False)
     def get(self, post_id, comment_id):
-        keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(keyBlog)
-
-        if not post:
-            self.error(404)
-            return
-        keyComment = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
-        comment = db.get(keyComment)
-        if not comment:
-            self.error(404)
-            return
+        post = get_post(post_id)
+        post_key = get_post_key(post_id)
+        comment = get_comment(comment_id, post_key)
 
         self.render("newcomment.html", p=post, content=comment.content)
 
     def post(self, post_id, comment_id):
-        keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(keyBlog)
-
-        if not post:
-            self.error(404)
-            return
-
-        keyComment = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
-        comment = db.get(keyComment)
-        if not comment:
-            self.error(404)
-            return
+        post = get_post(post_id)
+        post_key = get_post_key(post_id)
+        comment = get_comment(comment_id, post_key)
 
         content = self.request.get('content')
 
@@ -268,33 +296,19 @@ class EditComment(BlogHandler):
 
 class DeleteComment(BlogHandler):
     @check_user_is_logged_in
+    @check_post
+    @check_comment
+    @check_comment_user_has_permission("deletecomment.html", 'not allowed to delete comment', False)
     def get(self, post_id, comment_id):
-        keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(keyBlog)
-
-        if not post:
-            self.error(404)
-            return
-        keyComment = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
-        comment = db.get(keyComment)
-        if not comment:
-            self.error(404)
-            return
+        post = get_post(post_id)
+        post_key = get_post_key(post_id)
+        comment = get_comment(comment_id, post_key)
 
         self.render("deletecomment.html", subject=post.subject, c=comment)
 
     def post(self, post_id, comment_id):
-        keyBlog = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(keyBlog)
-
-        if not post:
-            self.error(404)
-            return
-        keyComment = db.Key.from_path('Comment', int(comment_id), parent=keyBlog)
-        comment = db.get(keyComment)
-        if not comment:
-            self.error(404)
-            return
+        post_key = get_post_key(post_id)
+        comment = get_comment(comment_id, post_key)
 
         comment.delete()
         self.redirect('/blog')
