@@ -1,9 +1,4 @@
 import re
-import random
-import hashlib
-import hmac
-from string import letters
-
 import webapp2
 
 from google.appengine.ext import db
@@ -13,6 +8,7 @@ import helper
 
 def blog_key(name='default'):
     return db.Key.from_path('blogs', name)
+
 
 def comment_key(name='default'):
     return db.Key.from_path('comment', name)
@@ -70,6 +66,7 @@ def check_user_is_logged_in(func):
             self.render('front.html', posts=posts, error_message='Please login')
             return
         return func(*args, **kwargs)
+
     return inner
 
 
@@ -83,6 +80,7 @@ def check_post(func):
             self.error(404)
             return
         return func(*args, **kwargs)
+
     return inner
 
 
@@ -98,6 +96,7 @@ def check_comment(func):
             self.error(404)
             return
         return func(*args, **kwargs)
+
     return inner
 
 
@@ -135,7 +134,7 @@ def check_comment_user_has_permission(template, error, actual_user):
             post_key = get_post_key(post_id)
             comment = get_comment(comment_id, post_key)
 
-            #for edit/delete comment
+            # for edit/delete comment
             if not actual_user and comment.user != self.user.key().id():
                 self.render(template, p=post, c=comment, error_message=error)
                 return
@@ -151,8 +150,10 @@ def check_comment_user_has_permission(template, error, actual_user):
 
     return validate_user_permission
 
+
 def get_post_key(post_id):
     return db.Key.from_path('Post', int(post_id), parent=blog_key())
+
 
 def get_post(post_id):
     key = get_post_key(post_id)
@@ -164,7 +165,6 @@ def get_comment(comment_id, keyBlog):
     return db.get(key)
 
 
-
 class PostPage(BlogHandler):
     @check_post
     @check_user_is_logged_in
@@ -173,9 +173,8 @@ class PostPage(BlogHandler):
 
         self.render("post/permalink.html", post=post)
 
+
 class EditPost(BlogHandler):
-
-
     @check_user_is_logged_in
     @check_post
     @check_user_has_permission("post/newpost.html", 'not allowed to edit post', False)
@@ -215,7 +214,6 @@ class DeletePost(BlogHandler):
         self.redirect('/blog')
 
 
-
 class NewPost(BlogHandler):
     @check_user_is_logged_in
     def get(self):
@@ -245,13 +243,14 @@ class LikePost(BlogHandler):
         l.put()
         self.redirect('/blog')
 
+
 class UnlikePost(BlogHandler):
     @check_user_is_logged_in
     @check_post
     def post(self, post_id):
         post_key = get_post_key(post_id)
 
-        like = db.GqlQuery("select * from Like where ANCESTOR is :1 AND user = :2",post_key, self.user.key().id() )
+        like = db.GqlQuery("select * from Like where ANCESTOR is :1 AND user = :2", post_key, self.user.key().id())
         like.get().delete()
         self.redirect('/blog')
 
@@ -262,7 +261,7 @@ class NewComment(BlogHandler):
     def get(self, post_id):
         post = get_post(post_id)
 
-        self.render("comment/newcomment.html", p=post )
+        self.render("comment/newcomment.html", p=post)
 
     @check_post
     def post(self, post_id):
@@ -325,6 +324,7 @@ class DeleteComment(BlogHandler):
 
         comment.delete()
         self.redirect('/blog')
+
 
 ###### Unit 2 HW's
 class Rot13(BlogHandler):

@@ -1,16 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-  {% include "header.html" %}
-  {% if error_message %}
-    <div class="alert alert-danger">{{error_message}}</div>
-    <a href="/blog/">Back to blog</a>
-  {% else %}
-    <p>Are you sure you want to delete the comment {{c.content}} for post: {{subject}}?</p>
 
-    <form action="#" method='post'>
-      <button type="submit" class="btn btn-success"> Delete </button>
-      <a href="/blog" class="btn btn-default delete"> Cancel </a>
-    </form>
-  {% endif %}
+    {% include "header.html" %}
+
+    {% if error_message %}
+        <div class="alert alert-danger">{{error_message}}</div>
+        <a href="/blog/">Back to blog</a>
+    {% else %}
+        <p>Are you sure you want to delete the comment {{c.content}} for post: {{subject}}?</p>
+
+        <form action="#" method='post'>
+            <button type="submit" class="btn btn-success"> Delete </button>
+            <a href="/blog" class="btn btn-default delete"> Cancel </a>
+        </form>
+    {% endif %}
+
 {% endblock %}

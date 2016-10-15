@@ -1,41 +1,41 @@
 <div class="post">
-  <div class="post-heading">
-    <div class="post-title">
-      {{p.subject}}
+    <div class="post-heading">
+        <div class="post-title">
+            {{p.subject}}
+        </div>
+
+        <div class="post-date">
+            {{p.created.strftime("%b %d, %Y")}}
+        </div>
     </div>
 
-    <div class="post-date">
-      {{p.created.strftime("%b %d, %Y")}}
+    <div class="post-content">
+        {{p._render_text | safe}}
     </div>
-  </div>
 
-  <div class="post-content">
-    {{p._render_text | safe}}
-  </div>
+    {% if p.userLikes(userId) == 1 %}
+        <form action="/blog/unlike/{{p.key().id()}}" method='post'>
+            <a href="/blog/edit/{{p.key().id()}}">Edit</a>
+            | <a href="/blog/delete/{{p.key().id()}}">Delete</a>
+            |  <button type="submit"  class="btn btn-success btn-sm"> Unlike </button>
+            | Nr likes: {{p.likes}}
+        </form>
+    {% else %}
+        <form action="/blog/like/{{p.key().id()}}" method='post'>
+            <a href="/blog/edit/{{p.key().id()}}">Edit</a>
+            | <a href="/blog/delete/{{p.key().id()}}">Delete</a>
+            |  <button type="submit"  class="btn btn-success btn-sm"> Like </button>
+            | Nr likes: {{p.likes}}
+        </form>
+    {% endif %}
+    <br/><br/>
 
-  {% if p.userLikes(userId) == 1 %}
-  <form action="/blog/unlike/{{p.key().id()}}" method='post'>
-    <a href="/blog/edit/{{p.key().id()}}">Edit</a>
-  | <a href="/blog/delete/{{p.key().id()}}">Delete</a>
-  |  <button type="submit"  class="btn btn-success btn-sm"> Unlike </button>
-  | Nr likes: {{p.likes}}
-  </form>
-  {% else %}
-  <form action="/blog/like/{{p.key().id()}}" method='post'>
-    <a href="/blog/edit/{{p.key().id()}}">Edit</a>
-  | <a href="/blog/delete/{{p.key().id()}}">Delete</a>
-  |  <button type="submit"  class="btn btn-success btn-sm"> Like </button>
-  | Nr likes: {{p.likes}}
-  </form>
-  {% endif %}
-  <br/><br/>
-  <div class="comment-list">
-    {% for c in p.comments %}
-      {{ c.render() | safe }}
-      <br><br>
-    {% endfor %}
-    <a class="btn btn-primary btn-sm" href="/comment/newcomment/{{p.key().id()}}">New comment</a>
-  </div>
-
+    <div class="comment-list">
+        {% for c in p.comments %}
+            {{ c.render() | safe }}
+            <br><br>
+        {% endfor %}
+        <a class="btn btn-primary btn-sm" href="/comment/newcomment/{{p.key().id()}}">New comment</a>
+    </div>
 
 </div>

@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-{% include "header.html" %}
+
+    {% include "header.html" %}
     <div class="container-fluid" >
         {% if error_message %}
-          <div class="alert alert-danger">{{error_message}}</div>
+            <div class="alert alert-danger">{{error_message}}</div>
         {% endif %}
         <a class="btn btn-primary" href="/blog/newpost">New post</a>
         {% for p in posts %}
@@ -12,7 +13,7 @@
             {% else %}
                 {{ p.render(0) | safe }}
             {% endif %}
-          <br><br>
+            <br><br>
         {% endfor %}
     </div>
 
