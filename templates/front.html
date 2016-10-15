@@ -7,7 +7,11 @@
         {% endif %}
         <a class="btn btn-primary" href="/blog/newpost">New post</a>
         {% for p in posts %}
-          {{ p.render(user.key()) | safe }}
+            {% if user %}
+                {{ p.render(user.key()) | safe }}
+            {% else %}
+                {{ p.render(0) | safe }}
+            {% endif %}
           <br><br>
         {% endfor %}
     </div>

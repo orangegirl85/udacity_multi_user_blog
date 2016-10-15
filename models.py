@@ -22,7 +22,10 @@ class Post(db.Model):
 
     def render(self, logged_user_key):
         self._render_text = self.content.replace('\n', '<br>')
-        return helper.render_str("post.html", p=self, userId=logged_user_key.id())
+        if not logged_user_key:
+            return helper.render_str("post.html", p=self, userId=0)
+        else:
+            return helper.render_str("post.html", p=self, userId=logged_user_key.id())
 
     @property
     def comments(self):

@@ -8,16 +8,16 @@
       {% if error_username or error_password or error_verify or error_email %}
        <div class="alert alert-danger">
          {% if error_username %}
-           {{error_username}}
+           {{error_username}}<br/>
          {% endif %}
          {% if error_password %}
-           {{error_password}}
+           {{error_password}}<br/>
          {% endif %}
          {% if error_verify %}
-           {{error_verify}}
+           {{error_verify}}<br/>
          {% endif %}
          {% if error_email %}
-           {{error_email}}
+           {{error_email}}<br/>
          {% endif %}
         </div>
       {% endif %}
