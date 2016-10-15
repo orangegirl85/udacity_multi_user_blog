@@ -2,7 +2,7 @@
 
 {% block content %}
 {% include "header.html" %}
-  <h2>new post</h2>
+  <h2>{% if post %} Edit {% else %} New {% endif %} post</h2>
 
     {% if error_message or error %}
       <div class="alert alert-danger">

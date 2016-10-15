@@ -16,14 +16,13 @@ class Post(db.Model):
     """Post object"""
     subject = db.StringProperty(required=True)
     content = db.TextProperty(required=True)
-    likes = db.IntegerProperty(default=0)
     user = db.IntegerProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     last_modified = db.DateTimeProperty(auto_now=True)
 
-    def render(self):
+    def render(self, logged_user_key):
         self._render_text = self.content.replace('\n', '<br>')
-        return helper.render_str("post.html", p=self)
+        return helper.render_str("post.html", p=self, userId=logged_user_key.id())
 
     @property
     def comments(self):
@@ -35,6 +34,33 @@ class Post(db.Model):
                             "ORDER BY created DESC",
                             key)
         return comments
+
+    @property
+    def likes(self):
+        key = db.Key.from_path('Post', int(self.key().id()), parent=blog_key())
+
+        likes = db.GqlQuery("SELECT *"
+                            "FROM Like "
+                            "WHERE ANCESTOR IS :1 ",
+                            key)
+        count = 0
+        for i in likes:
+            count+=1
+        return count
+
+    def userLikes(self, user_id):
+        keyPost = db.Key.from_path('Post', int(self.key().id()), parent=blog_key())
+
+        userLikes = db.GqlQuery("SELECT *"
+                            "FROM Like "
+                            "WHERE ANCESTOR IS :1 "
+                            "AND user = :2",
+                            keyPost, user_id)
+
+        count = 0
+        for i in userLikes:
+            count+=1
+        return count
 
 def make_salt(length = 5):
     return ''.join(random.choice(letters) for x in xrange(length))
@@ -90,4 +116,10 @@ class Comment(db.Model):
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
         return helper.render_str("comment.html", c=self)
+
+
+class Like(db.Model):
+    user = db.IntegerProperty(required=True)
+
+
 

@@ -13,12 +13,21 @@
     {{p._render_text | safe}}
   </div>
 
+  {% if p.userLikes(userId) == 1 %}
+  <form action="/blog/unlike/{{p.key().id()}}" method='post'>
+    <a href="/blog/edit/{{p.key().id()}}">Edit</a>
+  | <a href="/blog/delete/{{p.key().id()}}">Delete</a>
+  |  <button type="submit"  class="btn btn-success btn-sm"> Unlike </button>
+  | Nr likes: {{p.likes}}
+  </form>
+  {% else %}
   <form action="/blog/like/{{p.key().id()}}" method='post'>
     <a href="/blog/edit/{{p.key().id()}}">Edit</a>
   | <a href="/blog/delete/{{p.key().id()}}">Delete</a>
   |  <button type="submit"  class="btn btn-success btn-sm"> Like </button>
   | Nr likes: {{p.likes}}
   </form>
+  {% endif %}
   <br/><br/>
   <div class="comment-list">
     {% for c in p.comments %}

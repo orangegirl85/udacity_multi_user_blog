@@ -7,7 +7,7 @@ from string import letters
 import webapp2
 
 from google.appengine.ext import db
-from models import Post, User, Comment
+from models import Post, User, Comment, Like
 import helper
 
 
@@ -130,18 +130,17 @@ def check_comment_user_has_permission(template, error, actual_user):
         def inner(*args, **kwds):
             self = args[0]
             post_id = args[1]
-            print post_id
             comment_id = args[2]
-            print comment_id
             post = get_post(post_id)
             post_key = get_post_key(post_id)
-            print post_key
             comment = get_comment(comment_id, post_key)
 
+            #for edit/delete comment
             if not actual_user and comment.user != self.user.key().id():
                 self.render(template, p=post, c=comment, error_message=error)
                 return
 
+            # for like/unlike
             if actual_user and comment.user == self.user.key().id():
                 posts = db.GqlQuery("select * from Post order by created desc limit 10")
                 self.render(template, posts=posts, error_message=error)
@@ -165,6 +164,7 @@ def get_comment(comment_id, keyBlog):
     return db.get(key)
 
 
+
 class PostPage(BlogHandler):
     @check_post
     @check_user_is_logged_in
@@ -181,7 +181,7 @@ class EditPost(BlogHandler):
     @check_user_has_permission("newpost.html", 'not allowed to edit post', False)
     def get(self, post_id):
         post = get_post(post_id)
-        self.render("newpost.html", subject=post.subject, content=post.content)
+        self.render("newpost.html", post=post, subject=post.subject, content=post.content)
 
     def post(self, post_id):
         post = get_post(post_id)
@@ -239,10 +239,20 @@ class LikePost(BlogHandler):
     @check_post
     @check_user_has_permission("front.html", 'not allowed to like own post', True)
     def post(self, post_id):
-        post = get_post(post_id)
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
 
-        post.likes +=1
-        post.put()
+        l = Like(parent=key, user=self.user.key().id())
+        l.put()
+        self.redirect('/blog')
+
+class UnlikePost(BlogHandler):
+    @check_user_is_logged_in
+    @check_post
+    def post(self, post_id):
+        post_key = get_post_key(post_id)
+
+        like = db.GqlQuery("select * from Like where ANCESTOR is :1 AND user = :2",post_key, self.user.key().id() )
+        like.get().delete()
         self.redirect('/blog')
 
 
@@ -279,7 +289,7 @@ class EditComment(BlogHandler):
         post_key = get_post_key(post_id)
         comment = get_comment(comment_id, post_key)
 
-        self.render("newcomment.html", p=post, content=comment.content)
+        self.render("newcomment.html", p=post, content=comment.content, c=comment)
 
     def post(self, post_id, comment_id):
         post = get_post(post_id)
@@ -459,6 +469,7 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/edit/([0-9]+)', EditPost),
                                ('/blog/delete/([0-9]+)', DeletePost),
                                ('/blog/like/([0-9]+)', LikePost),
+                               ('/blog/unlike/([0-9]+)', UnlikePost),
                                ('/comment/newcomment/([0-9]+)', NewComment),
                                ('/comment/edit/([0-9]+)/([0-9]+)', EditComment),
                                ('/comment/delete/([0-9]+)/([0-9]+)', DeleteComment),
