@@ -130,13 +130,16 @@ def check_comment_user_has_permission(template, error, actual_user):
         def inner(*args, **kwds):
             self = args[0]
             post_id = args[1]
+            print post_id
             comment_id = args[2]
+            print comment_id
             post = get_post(post_id)
             post_key = get_post_key(post_id)
+            print post_key
             comment = get_comment(comment_id, post_key)
 
             if not actual_user and comment.user != self.user.key().id():
-                self.render(template, p=post, error_message=error)
+                self.render(template, p=post, c=comment, error_message=error)
                 return
 
             if actual_user and comment.user == self.user.key().id():

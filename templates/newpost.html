@@ -1,27 +1,40 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% include "header.html" %}
   <h2>new post</h2>
 
-    {% if error_message %}
-      <div>{{error_message}}</div>
+    {% if error_message or error %}
+      <div class="alert alert-danger">
+          {% if error_message %}
+            {{error_message}}
+          {% endif %}
+
+          {% if error %}
+            {{error}}
+          {% endif %}
+      </div>
       <a href="/blog/">Back to blog</a>
     {% else %}
 
-      <form method="post">
-        <label>
-          <div>subject</div>
-          <input type="text" name="subject" value="{{subject}}">
-        </label>
+     <div class="row">
+        <div class="col-md-4">
+          <form action="#" method = "post">
+            <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input type ="text" class="form-control" name="subject" value="{{subject}}">
 
-        <label>
-          <div>blog</div>
-          <textarea name="content">{{content}}</textarea>
-        </label>
+                <label for="content">Content:</label>
+                <textarea class="form-control" name="content">{{content}}</textarea>
 
-        <div class="error">{{error}}</div>
+                <br>
+                <button type="submit" class="btn btn-default" id="submit" type="submit">
+                    Submit
+                </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
-        <input type="submit">
-      </form>
     {% endif %}
 {% endblock %}

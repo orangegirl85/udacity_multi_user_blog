@@ -12,15 +12,21 @@
   <div class="post-content">
     {{p._render_text | safe}}
   </div>
-  <a href="/blog/edit/{{p.key().id()}}">Edit</a>
-  | <a href="/blog/delete/{{p.key().id()}}">Delete</a>
+
   <form action="/blog/like/{{p.key().id()}}" method='post'>
-    <button type="submit"  type="submit"> Like </button>{{p.likes}}
+    <a href="/blog/edit/{{p.key().id()}}">Edit</a>
+  | <a href="/blog/delete/{{p.key().id()}}">Delete</a>
+  |  <button type="submit"  class="btn btn-success btn-sm"> Like </button>
+  | Nr likes: {{p.likes}}
   </form>
+  <br/><br/>
+  <div class="comment-list">
     {% for c in p.comments %}
       {{ c.render() | safe }}
       <br><br>
     {% endfor %}
-    <a href="/comment/newcomment/{{p.key().id()}}">New comment</a>
+    <a class="btn btn-primary btn-sm" href="/comment/newcomment/{{p.key().id()}}">New comment</a>
+  </div>
+
 
 </div>
