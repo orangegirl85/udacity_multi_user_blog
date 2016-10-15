@@ -171,17 +171,17 @@ class PostPage(BlogHandler):
     def get(self, post_id):
         post = get_post(post_id)
 
-        self.render("permalink.html", post=post)
+        self.render("post/permalink.html", post=post)
 
 class EditPost(BlogHandler):
 
 
     @check_user_is_logged_in
     @check_post
-    @check_user_has_permission("newpost.html", 'not allowed to edit post', False)
+    @check_user_has_permission("post/newpost.html", 'not allowed to edit post', False)
     def get(self, post_id):
         post = get_post(post_id)
-        self.render("newpost.html", post=post, subject=post.subject, content=post.content)
+        self.render("post/newpost.html", post=post, subject=post.subject, content=post.content)
 
     def post(self, post_id):
         post = get_post(post_id)
@@ -196,17 +196,17 @@ class EditPost(BlogHandler):
             self.redirect('/blog/%s' % str(post.key().id()))
         else:
             error = "subject and content, please!"
-            self.render("newpost.html", subject=subject, content=content, error=error)
+            self.render("post/newpost.html", self.user.key(), subject=subject, content=content, error=error)
 
 
 class DeletePost(BlogHandler):
     @check_user_is_logged_in
     @check_post
-    @check_user_has_permission("deletepost.html", 'not allowed to delete post', False)
+    @check_user_has_permission("post/deletepost.html", 'not allowed to delete post', False)
     def get(self, post_id):
         post = get_post(post_id)
 
-        self.render("deletepost.html", p=post)
+        self.render("post/deletepost.html", p=post)
 
     def post(self, post_id):
         post = get_post(post_id)
@@ -219,7 +219,7 @@ class DeletePost(BlogHandler):
 class NewPost(BlogHandler):
     @check_user_is_logged_in
     def get(self):
-        self.render("newpost.html")
+        self.render("post/newpost.html")
 
     def post(self):
         subject = self.request.get('subject')
@@ -231,7 +231,7 @@ class NewPost(BlogHandler):
             self.redirect('/blog/%s' % str(p.key().id()))
         else:
             error = "subject and content, please!"
-            self.render("newpost.html", subject=subject, content=content, error=error)
+            self.render("post/newpost.html", subject=subject, content=content, error=error)
 
 
 class LikePost(BlogHandler):
@@ -262,7 +262,7 @@ class NewComment(BlogHandler):
     def get(self, post_id):
         post = get_post(post_id)
 
-        self.render("newcomment.html", p=post )
+        self.render("comment/newcomment.html", p=post )
 
     @check_post
     def post(self, post_id):
@@ -276,20 +276,20 @@ class NewComment(BlogHandler):
             self.redirect('/blog')
         else:
             error = "content, please!"
-            self.render("newcomment.html", p=post, content=content, error=error)
+            self.render("comment/newcomment.html", p=post, content=content, error=error)
 
 
 class EditComment(BlogHandler):
     @check_user_is_logged_in
     @check_post
     @check_comment
-    @check_comment_user_has_permission("newcomment.html", 'not allowed to edit comment', False)
+    @check_comment_user_has_permission("comment/newcomment.html", 'not allowed to edit comment', False)
     def get(self, post_id, comment_id):
         post = get_post(post_id)
         post_key = get_post_key(post_id)
         comment = get_comment(comment_id, post_key)
 
-        self.render("newcomment.html", p=post, content=comment.content, c=comment)
+        self.render("comment/newcomment.html", p=post, content=comment.content, c=comment)
 
     def post(self, post_id, comment_id):
         post = get_post(post_id)
@@ -304,20 +304,20 @@ class EditComment(BlogHandler):
             self.redirect('/blog')
         else:
             error = " content, please!"
-            self.render("newcomment.html", p=post, content=content, error=error)
+            self.render("comment/newcomment.html", p=post, content=content, error=error)
 
 
 class DeleteComment(BlogHandler):
     @check_user_is_logged_in
     @check_post
     @check_comment
-    @check_comment_user_has_permission("deletecomment.html", 'not allowed to delete comment', False)
+    @check_comment_user_has_permission("comment/deletecomment.html", 'not allowed to delete comment', False)
     def get(self, post_id, comment_id):
         post = get_post(post_id)
         post_key = get_post_key(post_id)
         comment = get_comment(comment_id, post_key)
 
-        self.render("deletecomment.html", subject=post.subject, c=comment)
+        self.render("comment/deletecomment.html", subject=post.subject, c=comment)
 
     def post(self, post_id, comment_id):
         post_key = get_post_key(post_id)
@@ -363,7 +363,7 @@ def valid_email(email):
 
 class Signup(BlogHandler):
     def get(self):
-        self.render("signup-form.html")
+        self.render("user/signup-form.html")
 
     def post(self):
         have_error = False
@@ -391,7 +391,7 @@ class Signup(BlogHandler):
             have_error = True
 
         if have_error:
-            self.render('signup-form.html', **params)
+            self.render('user/signup-form.html', **params)
         else:
             self.done()
 
@@ -410,7 +410,7 @@ class Register(Signup):
         u = User.by_name(self.username)
         if u:
             msg = 'That user already exists.'
-            self.render('signup-form.html', error_username=msg)
+            self.render('user/signup-form.html', error_username=msg)
         else:
             u = User.register(self.username, self.password, self.email)
             u.put()
@@ -421,7 +421,7 @@ class Register(Signup):
 
 class Login(BlogHandler):
     def get(self):
-        self.render('login-form.html')
+        self.render('user/login-form.html')
 
     def post(self):
         username = self.request.get('username')
@@ -433,7 +433,7 @@ class Login(BlogHandler):
             self.redirect('/blog')
         else:
             msg = 'Invalid login'
-            self.render('login-form.html', error=msg)
+            self.render('user/login-form.html', error=msg)
 
 
 class Logout(BlogHandler):

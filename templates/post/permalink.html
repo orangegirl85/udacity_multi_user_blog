@@ -3,5 +3,9 @@
 {% block content %}
 {% include "header.html" %}
   <a href="/blog">Back to all posts</a>
-  {{post.render() | safe}}
+    {% if user %}
+        {{ post.render(user.key()) | safe }}
+    {% else %}
+        {{ post.render(0) | safe }}
+    {% endif %}
 {% endblock %}

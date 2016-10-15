@@ -23,9 +23,10 @@ class Post(db.Model):
     def render(self, logged_user_key):
         self._render_text = self.content.replace('\n', '<br>')
         if not logged_user_key:
-            return helper.render_str("post.html", p=self, userId=0)
+            return helper.render_str("post/post.html", p=self, userId=0)
         else:
-            return helper.render_str("post.html", p=self, userId=logged_user_key.id())
+            return helper.render_str("post/post.html", p=self, userId=logged_user_key.id())
+
 
     @property
     def comments(self):
@@ -118,7 +119,7 @@ class Comment(db.Model):
 
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
-        return helper.render_str("comment.html", c=self)
+        return helper.render_str("comment/comment.html", c=self)
 
 
 class Like(db.Model):
