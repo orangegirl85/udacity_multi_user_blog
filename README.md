@@ -48,6 +48,19 @@
 1. Project Structure
 ```
 /udacity_multi_user_blog
+    /app
+        /helpers
+            __init__.py
+            general.py
+            post.py
+            user.py
+        /models
+            __init__.py
+            comment.py
+            like.py
+            post.py
+            user.py
+        __init__.py
     /static
         bootstrap.min.css
         main.css
@@ -72,8 +85,6 @@
     .gitignore
     app.yaml
     blog.py
-    helper.py
     index.yaml
-    models.py
     README.md
 ```

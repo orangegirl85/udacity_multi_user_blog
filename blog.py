@@ -1,9 +1,13 @@
 import re
-import webapp2
 
+import webapp2
 from google.appengine.ext import db
-from models import Post, User, Comment, Like
-import helper
+from app.models.comment import Comment
+from app.models.like import Like
+from app.models.post import Post
+from app.models.user import User
+from app.helpers.general import render_str as r_str
+from app.helpers.user import make_secure_val, check_secure_val
 
 
 def blog_key(name='default'):
@@ -20,20 +24,20 @@ class BlogHandler(webapp2.RequestHandler):
 
     def render_str(self, template, **params):
         params['user'] = self.user
-        return helper.render_str(template, **params)
+        return r_str(template, **params)
 
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
     def set_secure_cookie(self, name, val):
-        cookie_val = helper.make_secure_val(val)
+        cookie_val = make_secure_val(val)
         self.response.headers.add_header(
             'Set-Cookie',
             '%s=%s; Path=/' % (name, cookie_val))
 
     def read_secure_cookie(self, name):
         cookie_val = self.request.cookies.get(name)
-        return cookie_val and helper.check_secure_val(cookie_val)
+        return cookie_val and check_secure_val(cookie_val)
 
     def login(self, user):
         self.set_secure_cookie('user_id', str(user.key().id()))
