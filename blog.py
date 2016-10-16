@@ -182,6 +182,9 @@ class EditPost(BlogHandler):
         post = get_post(post_id)
         self.render("post/newpost.html", post=post, subject=post.subject, content=post.content)
 
+    @check_user_is_logged_in
+    @check_post
+    @check_user_has_permission("post/newpost.html", 'not allowed to edit post', False)
     def post(self, post_id):
         post = get_post(post_id)
 
@@ -207,6 +210,9 @@ class DeletePost(BlogHandler):
 
         self.render("post/deletepost.html", p=post)
 
+    @check_user_is_logged_in
+    @check_post
+    @check_user_has_permission("post/deletepost.html", 'not allowed to delete post', False)
     def post(self, post_id):
         post = get_post(post_id)
 
@@ -219,6 +225,7 @@ class NewPost(BlogHandler):
     def get(self):
         self.render("post/newpost.html")
 
+    @check_user_is_logged_in
     def post(self):
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -263,6 +270,7 @@ class NewComment(BlogHandler):
 
         self.render("comment/newcomment.html", p=post)
 
+    @check_user_is_logged_in
     @check_post
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
@@ -290,6 +298,10 @@ class EditComment(BlogHandler):
 
         self.render("comment/newcomment.html", p=post, content=comment.content, c=comment)
 
+    @check_user_is_logged_in
+    @check_post
+    @check_comment
+    @check_comment_user_has_permission("comment/newcomment.html", 'not allowed to edit comment', False)
     def post(self, post_id, comment_id):
         post = get_post(post_id)
         post_key = get_post_key(post_id)
@@ -318,6 +330,10 @@ class DeleteComment(BlogHandler):
 
         self.render("comment/deletecomment.html", subject=post.subject, c=comment)
 
+    @check_user_is_logged_in
+    @check_post
+    @check_comment
+    @check_comment_user_has_permission("comment/deletecomment.html", 'not allowed to delete comment', False)
     def post(self, post_id, comment_id):
         post_key = get_post_key(post_id)
         comment = get_comment(comment_id, post_key)

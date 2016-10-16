@@ -8,19 +8,31 @@
     * Used technologies: Python, Google App Engine, Bootstrap for CSS
 
 
-# Run App
+# Run deployed app
 -----------------------
 1. Go to  https://multi-user-blog-course.appspot.com/blog
 
-2. Create new users (Signup button)
 
-3. Login with created user (Login)
+# Prerequisites
 
-4. Create post, edit post, delete post
+1. Install Python
 
-5. Create comment, edit comment, delete comment
+2. `git clone https://github.com/GoogleCloudPlatform/python-docs-samples`
 
-6. Like post, unlike post
+
+
+# Run App on localhost
+-----------------------
+
+1. `cd python-docs-samples/appengine/standard/`
+
+2. `git clone https://github.com/orangegirl85/udacity_multi_user_blog.git`
+
+3. `cd udacity_multi_user_blog`
+
+4. dev_appserver.py .
+
+5. Navigate to http://localhost:8080
 
 
 
@@ -28,7 +40,7 @@
 ----------
 1. Intro to backend - Udacity course
 
-2. decorators ???
+2. Decorators with arguments: http://thecodeship.com/patterns/guide-to-python-function-decorators/
 
 
 # Extras
